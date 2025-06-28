@@ -323,7 +323,38 @@ async function syncWithServer() {
       await postQuoteToServer(newQuote);
     });
   }
+  async function syncQuotes() {
+    displaySyncMessage("Starting full sync...");
   
+    try {
+      const serverQuotes = await fetchQuotesFromServer();
+      if (!Array.isArray(serverQuotes)) throw new Error("Invalid data format from server.");
+  
+      let newQuotes = 0;
+  
+      serverQuotes.forEach(serverQuote => {
+        const existing = quotes.find(local => local.text === serverQuote.text);
+        if (!existing) {
+          quotes.push(serverQuote);
+          newQuotes++;
+        } else if (existing.category !== serverQuote.category) {
+          // Server wins for category conflict
+          existing.category = serverQuote.category;
+        }
+      });
+  
+      saveQuotes();
+      populateCategories();
+      displaySyncMessage(`Sync complete: ${newQuotes} new quotes added.`);
+  
+    } catch (error) {
+      console.error("Sync error:", error);
+      displaySyncMessage("Sync failed: " + error.message, true);
+    }
+  }
+  document.getElementById("syncBtn").addEventListener("click", syncQuotes);
+  setInterval(syncQuotes, 60000); // every 1 minute
+
   
 // Start
 init();
