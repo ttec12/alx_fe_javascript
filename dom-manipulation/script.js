@@ -355,6 +355,41 @@ async function syncWithServer() {
   document.getElementById("syncBtn").addEventListener("click", syncQuotes);
   setInterval(syncQuotes, 60000); // every 1 minute
 
+  displaySyncMessage("Quotes synced with server!");
+console.log("Quotes synced with server!"); // Optional console log
+
+async function syncQuotes() {
+    displaySyncMessage("Starting full sync...");
+  
+    try {
+      const serverQuotes = await fetchQuotesFromServer();
+      if (!Array.isArray(serverQuotes)) throw new Error("Invalid data format from server.");
+  
+      let newQuotes = 0;
+  
+      serverQuotes.forEach(serverQuote => {
+        const existing = quotes.find(local => local.text === serverQuote.text);
+        if (!existing) {
+          quotes.push(serverQuote);
+          newQuotes++;
+        } else if (existing.category !== serverQuote.category) {
+          existing.category = serverQuote.category; // Server wins
+        }
+      });
+  
+      saveQuotes();
+      populateCategories();
+  
+      displaySyncMessage("Quotes synced with server!");
+      console.log("Quotes synced with server!");
+  
+    } catch (error) {
+      console.error("Sync error:", error);
+      displaySyncMessage("Sync failed: " + error.message, true);
+    }
+  }
+  displaySyncMessage("Quotes synced with server!");
+
   
 // Start
 init();
