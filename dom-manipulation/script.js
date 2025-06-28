@@ -38,6 +38,34 @@ function loadQuotesFromStorage() {
   }
 }
 
+function createAddQuoteForm() {
+    const addBtn = document.getElementById("addQuoteBtn");
+    addBtn.addEventListener("click", () => {
+      const textInput = document.getElementById("newQuoteText");
+      const categoryInput = document.getElementById("newQuoteCategory");
+  
+      const newText = textInput.value.trim();
+      const newCategory = categoryInput.value.trim();
+  
+      if (!newText || !newCategory) {
+        alert("Please fill in both fields.");
+        return;
+      }
+  
+      quotes.push({ text: newText, category: newCategory });
+      saveQuotes();
+      populateCategories();
+  
+      // Optional: auto-select the new category
+      categoryFilter.value = newCategory;
+      filterQuotes();
+  
+      textInput.value = "";
+      categoryInput.value = "";
+      alert("Quote added successfully!");
+    });
+  }
+  
 // Save quotes to localStorage
 function saveQuotes() {
   localStorage.setItem(STORAGE_QUOTES, JSON.stringify(quotes));
@@ -213,6 +241,37 @@ function displaySyncMessage(msg, isError = false) {
 document.getElementById("syncBtn").addEventListener("click", syncWithServer);
 setInterval(syncWithServer, 60000); // every 1 minute
 
-
+async function syncWithServer() {
+    displaySyncMessage("Syncing with server...");
+  
+    const serverQuotes = await fetchQuotesFromServer();
+    if (serverQuotes.length === 0) {
+      displaySyncMessage("No new server data found.");
+      return;
+    }
+  
+    let newQuotes = 0;
+  
+    serverQuotes.forEach(serverQuote => {
+      const match = quotes.find(q => q.text === serverQuote.text);
+      if (!match) {
+        quotes.push(serverQuote);
+        newQuotes++;
+      } else if (match.category !== serverQuote.category) {
+        match.category = serverQuote.category; // server takes precedence
+      }
+    });
+  
+    saveQuotes();
+    populateCategories();
+  
+    if (newQuotes > 0) {
+      displaySyncMessage(`Synced: ${newQuotes} new quotes added.`);
+    } else {
+      displaySyncMessage("Quotes already up to date.");
+    }
+  }
+  
 // Start
 init();
+
