@@ -271,6 +271,59 @@ async function syncWithServer() {
       displaySyncMessage("Quotes already up to date.");
     }
   }
+
+  async function postQuoteToServer(quote) {
+    try {
+      const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(quote)
+      });
+  
+      if (!response.ok) throw new Error("Failed to post quote.");
+  
+      const responseData = await response.json();
+      console.log("Quote successfully posted to server:", responseData);
+      displaySyncMessage("Quote sent to server (simulated).");
+  
+    } catch (error) {
+      console.error("Error posting to server:", error);
+      displaySyncMessage("Failed to send quote to server.", true);
+    }
+  }
+  function createAddQuoteForm() {
+    const addBtn = document.getElementById("addQuoteBtn");
+    addBtn.addEventListener("click", async () => {
+      const textInput = document.getElementById("newQuoteText");
+      const categoryInput = document.getElementById("newQuoteCategory");
+  
+      const newText = textInput.value.trim();
+      const newCategory = categoryInput.value.trim();
+  
+      if (!newText || !newCategory) {
+        alert("Please fill in both fields.");
+        return;
+      }
+  
+      const newQuote = { text: newText, category: newCategory };
+      quotes.push(newQuote);
+      saveQuotes();
+      populateCategories();
+  
+      categoryFilter.value = newCategory;
+      filterQuotes();
+  
+      textInput.value = "";
+      categoryInput.value = "";
+      alert("Quote added successfully!");
+  
+      // 🔄 Simulate sending the quote to a server
+      await postQuoteToServer(newQuote);
+    });
+  }
+  
   
 // Start
 init();
